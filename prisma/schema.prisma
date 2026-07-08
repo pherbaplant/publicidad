@@ -61,8 +61,18 @@ model Campana {
   inversionTotal Float
 
   // Metas usadas para normalizar los scores del Índice de Desempeño
-  metaVentas     Float? // referencia para Score_Incremento_Ventas
-  metaTiendas    Int? // referencia para Score_Cobertura_Tiendas
+  metaVentas  Float? // referencia para Score_Incremento_Ventas
+  metaTiendas Int? // referencia para Score_Cobertura_Tiendas
+
+  // --- Resultados agregados, recalculados por el motor de cálculos automáticos ---
+  // (no se editan a mano; se recomputan al guardar Ejecuciones/Evaluaciones o al
+  // cambiar los pesos/umbrales en Configuracion)
+  roas                     Float?
+  scoreIncrementoVentas    Float?
+  scoreCalidadEjecucion    Float?
+  scoreCoberturaTiendas    Float?
+  scoreCumplimientoTiempos Float?
+  indiceDesempeno          Float?
 
   ejecuciones Ejecucion[]
   createdAt   DateTime    @default(now())
@@ -92,9 +102,8 @@ model Ejecucion {
   fechaEjecucion   DateTime?
 
   // Calculados por el motor de cálculos automáticos (no se editan a mano)
-  roas               Float?
-  scoreCalidad       Float?
-  indiceDesempeno    Float?
+  roas         Float? // ventasAtribuidas / inversionAsignada
+  scoreCalidad Float? // promedio ponderado de sus EvaluacionCalidad (0-100)
 
   evaluaciones EvaluacionCalidad[]
   createdAt    DateTime            @default(now())
