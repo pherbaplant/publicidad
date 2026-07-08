@@ -8,7 +8,7 @@ export const evaluacionCalidadSchema = z.object({
     .number()
     .min(0, "El puntaje mínimo es 0")
     .max(100, "El puntaje máximo es 100"),
-  comentario: optionalString(z.string().trim()).optional(),
+  comentario: optionalString(z.string().trim()),
 });
 
 export type EvaluacionCalidadInput = z.infer<typeof evaluacionCalidadSchema>;

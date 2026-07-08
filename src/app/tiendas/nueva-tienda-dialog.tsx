@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { SubmitButton } from "@/components/submit-button";
 import { ESTADO_INICIAL } from "@/server/modules/shared/action-state";
+import { itemsDesdeLista } from "@/lib/select-items";
 import { crearTiendaAction } from "./actions";
 
 export function NuevaTiendaDialog({
@@ -69,7 +70,7 @@ export function NuevaTiendaDialog({
           </div>
           <div className="space-y-2">
             <Label htmlFor="ciudadId">Ciudad</Label>
-            <Select name="ciudadId" required>
+            <Select name="ciudadId" required items={itemsDesdeLista(ciudades)}>
               <SelectTrigger id="ciudadId" className="w-full">
                 <SelectValue placeholder="Selecciona una ciudad" />
               </SelectTrigger>

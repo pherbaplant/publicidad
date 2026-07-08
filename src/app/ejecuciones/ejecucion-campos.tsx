@@ -7,6 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { itemsDesdeLista } from "@/lib/select-items";
 
 function ErrorText({ children }: { children: string }) {
   return <p className="text-sm text-destructive">{children}</p>;
@@ -51,6 +52,7 @@ export function EjecucionCampos({
             defaultValues?.campanaId ? String(defaultValues.campanaId) : undefined
           }
           disabled={bloquearCampana}
+          items={itemsDesdeLista(opciones.campanas)}
         >
           <SelectTrigger id="campanaId" className="w-full">
             <SelectValue placeholder="Selecciona una campaña" />
@@ -74,6 +76,7 @@ export function EjecucionCampos({
             defaultValue={
               defaultValues?.tiendaId ? String(defaultValues.tiendaId) : undefined
             }
+            items={itemsDesdeLista(opciones.tiendas)}
           >
             <SelectTrigger id="tiendaId" className="w-full">
               <SelectValue placeholder="Selecciona una tienda" />
@@ -96,6 +99,7 @@ export function EjecucionCampos({
             defaultValue={
               defaultValues?.productoId ? String(defaultValues.productoId) : undefined
             }
+            items={itemsDesdeLista(opciones.productos)}
           >
             <SelectTrigger id="productoId" className="w-full">
               <SelectValue placeholder="Selecciona un producto" />
@@ -119,6 +123,7 @@ export function EjecucionCampos({
           defaultValue={
             defaultValues?.responsableId ? String(defaultValues.responsableId) : undefined
           }
+          items={itemsDesdeLista(opciones.responsables)}
         >
           <SelectTrigger id="responsableId" className="w-full">
             <SelectValue placeholder="Selecciona un responsable" />

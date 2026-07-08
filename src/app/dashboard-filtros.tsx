@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { itemsDesdeLista } from "@/lib/select-items";
 
 const TODAS = "todas";
 
@@ -39,7 +40,11 @@ export function DashboardFiltros({
     <form className="flex flex-wrap items-end gap-3 rounded-lg border p-4">
       <div className="space-y-1">
         <Label htmlFor="campanaId">Campaña</Label>
-        <Select name="campanaId" defaultValue={valores.campanaId ?? TODAS}>
+        <Select
+          name="campanaId"
+          defaultValue={valores.campanaId ?? TODAS}
+          items={{ [TODAS]: "Todas", ...itemsDesdeLista(campanas) }}
+        >
           <SelectTrigger id="campanaId" className="w-44">
             <SelectValue />
           </SelectTrigger>
@@ -56,7 +61,11 @@ export function DashboardFiltros({
 
       <div className="space-y-1">
         <Label htmlFor="ciudadId">Ciudad</Label>
-        <Select name="ciudadId" defaultValue={valores.ciudadId ?? TODAS}>
+        <Select
+          name="ciudadId"
+          defaultValue={valores.ciudadId ?? TODAS}
+          items={{ [TODAS]: "Todas", ...itemsDesdeLista(ciudades) }}
+        >
           <SelectTrigger id="ciudadId" className="w-40">
             <SelectValue />
           </SelectTrigger>
@@ -73,7 +82,11 @@ export function DashboardFiltros({
 
       <div className="space-y-1">
         <Label htmlFor="productoId">Producto</Label>
-        <Select name="productoId" defaultValue={valores.productoId ?? TODAS}>
+        <Select
+          name="productoId"
+          defaultValue={valores.productoId ?? TODAS}
+          items={{ [TODAS]: "Todos", ...itemsDesdeLista(productos) }}
+        >
           <SelectTrigger id="productoId" className="w-44">
             <SelectValue />
           </SelectTrigger>
@@ -90,7 +103,11 @@ export function DashboardFiltros({
 
       <div className="space-y-1">
         <Label htmlFor="responsableId">Responsable</Label>
-        <Select name="responsableId" defaultValue={valores.responsableId ?? TODAS}>
+        <Select
+          name="responsableId"
+          defaultValue={valores.responsableId ?? TODAS}
+          items={{ [TODAS]: "Todos", ...itemsDesdeLista(responsables) }}
+        >
           <SelectTrigger id="responsableId" className="w-44">
             <SelectValue />
           </SelectTrigger>
@@ -120,6 +137,7 @@ export function DashboardFiltros({
         <Button
           type="button"
           variant="ghost"
+          nativeButton={false}
           render={
             <Link href="/">
               <X /> Limpiar

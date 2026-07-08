@@ -49,6 +49,7 @@ export default async function CampanaDetallePage({
           variant="ghost"
           size="sm"
           className="mb-2 -ml-2"
+          nativeButton={false}
           render={
             <Link href="/campanas">
               <ArrowLeft /> Volver a campañas
@@ -117,6 +118,7 @@ export default async function CampanaDetallePage({
         <h2 className="text-lg font-semibold">Ejecución en tienda</h2>
         <Button
           size="sm"
+          nativeButton={false}
           render={
             <Link href={`/ejecuciones/nueva?campanaId=${campana.id}`}>
               <Plus /> Registrar ejecución

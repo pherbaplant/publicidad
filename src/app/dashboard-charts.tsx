@@ -1,15 +1,6 @@
 "use client";
 
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Pie,
-  PieChart,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Bar, BarChart, CartesianGrid, Cell, XAxis, YAxis } from "recharts";
 import {
   Card,
   CardContent,
@@ -82,23 +73,51 @@ export function SemaforoDonutChart({
 }: {
   data: { verde: number; amarillo: number; rojo: number };
 }) {
-  const chartData = [
-    { name: "verde", value: data.verde, fill: COLOR_SEMAFORO.verde },
-    { name: "amarillo", value: data.amarillo, fill: COLOR_SEMAFORO.amarillo },
-    { name: "rojo", value: data.rojo, fill: COLOR_SEMAFORO.rojo },
-  ];
+  const total = data.verde + data.amarillo + data.rojo;
 
-  if (data.verde + data.amarillo + data.rojo === 0) {
+  if (total === 0) {
     return <EmptyState />;
   }
 
+  const chartData = [{ nombre: "Campañas", ...data }];
+
   return (
-    <ChartContainer config={chartConfigSemaforo} className="mx-auto h-64 aspect-square">
-      <PieChart>
-        <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-        <Pie data={chartData} dataKey="value" nameKey="name" innerRadius={50} strokeWidth={4} />
-      </PieChart>
-    </ChartContainer>
+    <div className="flex flex-col gap-4">
+      <ChartContainer config={chartConfigSemaforo} className="h-16 w-full">
+        <BarChart data={chartData} layout="vertical" barSize={40}>
+          <XAxis type="number" hide domain={[0, total]} />
+          <YAxis type="category" dataKey="nombre" hide />
+          <ChartTooltip content={<ChartTooltipContent />} />
+          <Bar dataKey="verde" stackId="a" fill={COLOR_SEMAFORO.verde} radius={[6, 0, 0, 6]} />
+          <Bar dataKey="amarillo" stackId="a" fill={COLOR_SEMAFORO.amarillo} />
+          <Bar dataKey="rojo" stackId="a" fill={COLOR_SEMAFORO.rojo} radius={[0, 6, 6, 0]} />
+        </BarChart>
+      </ChartContainer>
+      <div className="flex justify-center gap-6 text-sm">
+        <LeyendaSemaforo color={COLOR_SEMAFORO.verde} label="Verde" valor={data.verde} />
+        <LeyendaSemaforo color={COLOR_SEMAFORO.amarillo} label="Amarillo" valor={data.amarillo} />
+        <LeyendaSemaforo color={COLOR_SEMAFORO.rojo} label="Rojo" valor={data.rojo} />
+      </div>
+    </div>
+  );
+}
+
+function LeyendaSemaforo({
+  color,
+  label,
+  valor,
+}: {
+  color: string;
+  label: string;
+  valor: number;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="size-2.5 rounded-full" style={{ backgroundColor: color }} />
+      <span className="text-muted-foreground">
+        {label} · {valor}
+      </span>
+    </div>
   );
 }
 

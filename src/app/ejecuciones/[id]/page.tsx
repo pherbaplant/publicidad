@@ -49,6 +49,7 @@ export default async function EjecucionDetallePage({
           variant="ghost"
           size="sm"
           className="mb-2 -ml-2"
+          nativeButton={false}
           render={
             <Link href={`/campanas/${ejecucion.campanaId}`}>
               <ArrowLeft /> Volver a la campaña

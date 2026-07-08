@@ -23,6 +23,7 @@ import {
 import { SubmitButton } from "@/components/submit-button";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { ESTADO_INICIAL } from "@/server/modules/shared/action-state";
+import { itemsDesdeLista } from "@/lib/select-items";
 import { actualizarTiendaAction, eliminarTiendaAction } from "./actions";
 
 type Tienda = {
@@ -92,7 +93,11 @@ function TiendaRow({
             <Input name="formato" defaultValue={tienda.formato ?? ""} placeholder="Formato" />
           </div>
           <div className="min-w-40 flex-1">
-            <Select name="ciudadId" defaultValue={String(tienda.ciudadId)}>
+            <Select
+              name="ciudadId"
+              defaultValue={String(tienda.ciudadId)}
+              items={itemsDesdeLista(ciudades)}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Ciudad" />
               </SelectTrigger>

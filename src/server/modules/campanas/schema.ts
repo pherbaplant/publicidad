@@ -10,8 +10,8 @@ export const campanaSchema = z
     inversionTotal: z.coerce
       .number()
       .nonnegative("La inversión debe ser mayor o igual a 0"),
-    metaVentas: optionalString(z.coerce.number().nonnegative()).optional(),
-    metaTiendas: optionalString(z.coerce.number().int().positive()).optional(),
+    metaVentas: optionalString(z.coerce.number().nonnegative()),
+    metaTiendas: optionalString(z.coerce.number().int().positive()),
   })
   .refine((data) => data.fechaFin >= data.fechaInicio, {
     message: "La fecha de fin debe ser posterior o igual a la fecha de inicio",

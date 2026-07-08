@@ -9,9 +9,9 @@ export const ejecucionSchema = z.object({
   inversionAsignada: z.coerce
     .number()
     .nonnegative("La inversión debe ser mayor o igual a 0"),
-  ventasAtribuidas: optionalString(z.coerce.number().nonnegative()).optional(),
-  fechaPlanificada: optionalString(z.coerce.date()).optional(),
-  fechaEjecucion: optionalString(z.coerce.date()).optional(),
+  ventasAtribuidas: optionalString(z.coerce.number().nonnegative()),
+  fechaPlanificada: optionalString(z.coerce.date()),
+  fechaEjecucion: optionalString(z.coerce.date()),
 });
 
 export type EjecucionInput = z.infer<typeof ejecucionSchema>;

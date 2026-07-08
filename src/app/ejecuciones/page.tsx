@@ -23,6 +23,7 @@ export default async function EjecucionesPage() {
         description="Registro de campaña × tienda × producto, con inversión, ventas y evidencia de calidad."
         actions={
           <Button
+            nativeButton={false}
             render={
               <Link href="/ejecuciones/nueva">
                 <Plus /> Registrar ejecución
