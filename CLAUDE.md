@@ -19,7 +19,7 @@ rápido qué campañas/tiendas/responsables funcionaron y cuáles no.
 
 ---
 
-## Stack tecnológico (propuesta)
+## Stack tecnológico (confirmado)
 
 | Capa | Elección | Motivo |
 |---|---|---|
@@ -89,22 +89,30 @@ ROAS = Ventas atribuidas a la campaña / Inversión publicitaria de la campaña
   esa tienda/producto (dato que ingresa el equipo, no se pretende un modelo de atribución
   financiero perfecto — de ahí el objetivo "ejecutivo, defendible y accionable").
 
-### Índice de Desempeño (propuesta de fórmula)
+### Índice de Desempeño (fórmula confirmada)
 
-Combina resultado comercial con calidad real de ejecución, para que una campaña con buen
-ROAS pero mala ejecución en tienda (o viceversa) no se evalúe solo por una dimensión:
+Combina resultado comercial con calidad real de ejecución y disciplina operativa, para que
+una campaña con buen resultado de ventas pero mala ejecución en tienda (o viceversa) no se
+evalúe solo por una dimensión:
 
 ```
-Índice de Desempeño = (W1 × Score_ROAS) + (W2 × Score_Calidad_Ejecución) + (W3 × Score_Cumplimiento_Meta)
+Índice de Desempeño = (0.40 × Score_Incremento_Ventas)
+                     + (0.30 × Score_Calidad_Ejecución)
+                     + (0.20 × Score_Cobertura_Tiendas)
+                     + (0.10 × Score_Cumplimiento_Tiempos)
 ```
 
-- **Score_ROAS** (0–100): normalización del ROAS contra una meta/umbral definido por campaña.
+- **Score_Incremento_Ventas** (0–100): normalización del incremento/crecimiento de ventas
+  atribuido a la campaña (ventas atribuidas vs. meta de ventas de la campaña).
 - **Score_Calidad_Ejecución** (0–100): promedio de las categorías de calidad de ejecución
-  calificadas (checklist ponderado).
-- **Score_Cumplimiento_Meta** (0–100, opcional): % de cumplimiento de meta de ventas/inversión
-  de la campaña.
-- Pesos propuestos por defecto **(a confirmar)**: W1 = 0.5, W2 = 0.3, W3 = 0.2. Deben ser
-  configurables desde el sistema, no fijos en código.
+  calificadas (checklist ponderado), a nivel de Ejecución.
+- **Score_Cobertura_Tiendas** (0–100): % de tiendas planificadas para la campaña que
+  efectivamente registraron ejecución (tiendas ejecutadas / tiendas meta).
+- **Score_Cumplimiento_Tiempos** (0–100): % de ejecuciones registradas dentro del período
+  planificado de la campaña (sin atrasos respecto a la fecha planificada).
+- Pesos **confirmados por el usuario**: 40% / 30% / 20% / 10%. Deben ser configurables desde
+  el sistema (tabla de configuración), no fijos en código, para permitir ajustes futuros sin
+  redeploy.
 
 ### Semáforo visual (propuesta de umbrales)
 
@@ -144,10 +152,45 @@ ROAS pero mala ejecución en tienda (o viceversa) no se evalúe solo por una dim
 
 ---
 
+## Estructura técnica del proyecto (Paso 1 — completado)
+
+Proyecto base creado con `create-next-app` (App Router, TypeScript, Tailwind v4) +
+`shadcn/ui` + Prisma 7 con driver adapter `@prisma/adapter-better-sqlite3` (SQLite local
+persistente en `dev.db`, no committeado; se recrea con `npx prisma migrate dev`).
+
+```
+prisma/
+  schema.prisma       # modelos: Ciudad, Tienda, Producto, Responsable, Campana,
+                      # Ejecucion, CategoriaCalidad, EvaluacionCalidad,
+                      # EvidenciaFotografica, Configuracion (pesos/umbrales editables)
+  migrations/
+prisma.config.ts      # datasource + adapter better-sqlite3 para `prisma migrate`
+src/
+  app/                # rutas Next.js (páginas + futuras API routes)
+  components/ui/      # primitivos shadcn/ui
+  lib/
+    prisma.ts          # singleton de PrismaClient con el adapter better-sqlite3
+    utils.ts            # helper de shadcn (cn)
+  generated/prisma/     # cliente Prisma generado (gitignored)
+  server/modules/<dominio>/   # (a crear por módulo: campanas, tiendas, ciudades,
+                              # productos, responsables, ejecuciones, calidad —
+                              # lógica de negocio y acceso a datos separada de la UI)
+uploads/               # evidencia fotográfica (gitignored salvo .gitkeep)
+```
+
+Convención: la lógica de negocio (cálculo de ROAS, Índice de Desempeño, agregaciones)
+vive en `src/server/modules/<dominio>`, nunca directamente en componentes de UI ni en
+route handlers — estos últimos solo orquestan la llamada al módulo correspondiente.
+
+## Decisiones confirmadas
+
+- **Stack**: Next.js + TypeScript + Tailwind/shadcn + Prisma + SQLite — **aprobado**.
+- **Pesos del Índice de Desempeño**: 40% incremento de ventas, 30% calidad de ejecución,
+  20% cobertura de tiendas ejecutadas, 10% cumplimiento de tiempos — **confirmado**.
+
 ## Puntos abiertos a confirmar con el usuario
 
-1. ¿Confirmar el stack propuesto (Next.js + SQLite) o prefieren otro (p. ej. Python/FastAPI + SQLite, o algo ya usado en Farmatodo)?
-2. Pesos exactos y umbrales del Índice de Desempeño y del semáforo.
-3. Lista definitiva de categorías de calidad de ejecución a evaluar.
-4. ¿Se requiere manejo de usuarios/roles y autenticación, o es de un solo usuario/equipo sin login?
-5. ¿Cómo se define exactamente "ventas atribuidas" (dato manual ingresado por el responsable, o integración con otro sistema)?
+1. Umbrales exactos del semáforo (se mantiene la propuesta ≥80 verde / 60–79 amarillo / <60 rojo salvo indicación contraria).
+2. Lista definitiva de categorías de calidad de ejecución a evaluar.
+3. ¿Se requiere manejo de usuarios/roles y autenticación, o es de un solo usuario/equipo sin login?
+4. ¿Cómo se define exactamente "ventas atribuidas" (dato manual ingresado por el responsable, o integración con otro sistema)?

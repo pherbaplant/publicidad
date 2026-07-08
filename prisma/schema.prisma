@@ -1,0 +1,166 @@
+// Prisma schema — Sistema de Evaluación de Desempeño de Campañas Publicitarias (Farmatodo)
+// Ver /CLAUDE.md para el detalle de módulos, relaciones y fórmulas (ROAS / Índice de Desempeño).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// --- Catálogos base ---------------------------------------------------
+
+model Ciudad {
+  id        Int      @id @default(autoincrement())
+  nombre    String   @unique
+  tiendas   Tienda[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Tienda {
+  id          Int         @id @default(autoincrement())
+  nombre      String
+  formato     String?
+  ciudadId    Int
+  ciudad      Ciudad      @relation(fields: [ciudadId], references: [id])
+  ejecuciones Ejecucion[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Producto {
+  id          Int         @id @default(autoincrement())
+  nombre      String
+  marca       String?
+  ejecuciones Ejecucion[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Responsable {
+  id          Int         @id @default(autoincrement())
+  nombre      String
+  email       String?     @unique
+  rol         String?
+  ejecuciones Ejecucion[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+// --- Campañas y ejecución en tienda ------------------------------------
+
+model Campana {
+  id             Int      @id @default(autoincrement())
+  nombre         String
+  objetivo       String?
+  fechaInicio    DateTime
+  fechaFin       DateTime
+  inversionTotal Float
+
+  // Metas usadas para normalizar los scores del Índice de Desempeño
+  metaVentas     Float? // referencia para Score_Incremento_Ventas
+  metaTiendas    Int? // referencia para Score_Cobertura_Tiendas
+
+  ejecuciones Ejecucion[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+// Una Ejecución representa el registro campaña × tienda × producto
+model Ejecucion {
+  id Int @id @default(autoincrement())
+
+  campanaId Int
+  campana   Campana @relation(fields: [campanaId], references: [id], onDelete: Cascade)
+
+  tiendaId Int
+  tienda   Tienda @relation(fields: [tiendaId], references: [id])
+
+  productoId Int
+  producto   Producto @relation(fields: [productoId], references: [id])
+
+  responsableId Int
+  responsable   Responsable @relation(fields: [responsableId], references: [id])
+
+  inversionAsignada Float
+  ventasAtribuidas  Float?
+
+  fechaPlanificada DateTime? // para Score_Cumplimiento_Tiempos
+  fechaEjecucion   DateTime?
+
+  // Calculados por el motor de cálculos automáticos (no se editan a mano)
+  roas               Float?
+  scoreCalidad       Float?
+  indiceDesempeno    Float?
+
+  evaluaciones EvaluacionCalidad[]
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  @@unique([campanaId, tiendaId, productoId])
+}
+
+// --- Calidad de ejecución -----------------------------------------------
+
+// Catálogo de categorías del checklist de calidad de ejecución en punto de venta
+model CategoriaCalidad {
+  id          Int      @id @default(autoincrement())
+  nombre      String   @unique
+  descripcion String?
+  peso        Float    @default(1) // ponderación relativa dentro del checklist
+
+  evaluaciones EvaluacionCalidad[]
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+}
+
+// Calificación de una categoría de calidad para una Ejecución específica
+model EvaluacionCalidad {
+  id Int @id @default(autoincrement())
+
+  ejecucionId Int
+  ejecucion   Ejecucion @relation(fields: [ejecucionId], references: [id], onDelete: Cascade)
+
+  categoriaId Int
+  categoria   CategoriaCalidad @relation(fields: [categoriaId], references: [id])
+
+  puntaje    Float // 0-100
+  comentario String?
+
+  evidencias EvidenciaFotografica[]
+  createdAt  DateTime               @default(now())
+  updatedAt  DateTime               @updatedAt
+
+  @@unique([ejecucionId, categoriaId])
+}
+
+model EvidenciaFotografica {
+  id Int @id @default(autoincrement())
+
+  evaluacionId Int
+  evaluacion   EvaluacionCalidad @relation(fields: [evaluacionId], references: [id], onDelete: Cascade)
+
+  rutaArchivo String // ruta relativa dentro de /uploads
+  createdAt   DateTime @default(now())
+}
+
+// --- Configuración global -------------------------------------------------
+
+// Fila única con los pesos del Índice de Desempeño y los umbrales del semáforo,
+// editables desde el sistema (no hardcodeados en el motor de cálculo).
+model Configuracion {
+  id Int @id @default(1)
+
+  pesoIncrementoVentas    Float @default(0.40)
+  pesoCalidadEjecucion    Float @default(0.30)
+  pesoCoberturaTiendas    Float @default(0.20)
+  pesoCumplimientoTiempos Float @default(0.10)
+
+  umbralVerde    Float @default(80)
+  umbralAmarillo Float @default(60)
+
+  updatedAt DateTime @updatedAt
+}
