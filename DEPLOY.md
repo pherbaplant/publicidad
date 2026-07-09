@@ -1,87 +1,97 @@
-# Despliegue en un host con disco persistente (Railway / Render)
+# Despliegue en Vercel + Postgres (Neon o Supabase)
 
-Este proyecto usa SQLite en un archivo local (`better-sqlite3`) para persistencia,
-tal como pide `CLAUDE.md` ("base de datos local, sin servidor externo"). Eso
-**no funciona en plataformas serverless como Vercel** (filesystem efímero de
-solo lectura), pero funciona perfecto en cualquier host que te dé un proceso
-persistente + un disco/volumen persistente — como Railway o Render.
+Este proyecto usa Postgres (no SQLite) para poder desplegarse gratis en
+Vercel. Vercel es serverless: el filesystem de cada función es efímero, así
+que ni la base de datos ni las fotos de evidencia pueden vivir en disco local
+— la base de datos vive en un Postgres administrado (Neon o Supabase, ambos
+con capa gratuita) y las fotos en Vercel Blob.
 
-El repo ya incluye un `Dockerfile` listo para ambas plataformas. Los pasos son
-casi idénticos; solo cambia dónde configuras el volumen y las variables de entorno.
+## 1. Crear la base de datos (Neon o Supabase)
 
-## Qué hace el proyecto al arrancar
+Cualquiera de las dos funciona igual de bien; ambas exponen dos tipos de
+conexión que este proyecto necesita:
 
-`npm run start` corre `prisma migrate deploy && next start`: aplica las
-migraciones pendientes contra la base de datos indicada en `DATABASE_URL` y
-luego levanta el servidor. Es seguro correrlo en cada arranque del contenedor
-(no re-aplica migraciones ya aplicadas).
+- **Pooled** (para la app en runtime): pasa por un pgBouncer/pooler, soporta
+  muchas conexiones concurrentes de funciones serverless.
+- **Direct** (solo para migraciones): conexión directa a Postgres, sin pooler.
 
-## Variables de entorno requeridas
+**Neon** (neon.tech):
+1. Crea un proyecto → una base de datos.
+2. En *Connection Details*, copia la connection string que **incluye
+   `-pooler`** en el host → esa es `DATABASE_URL`.
+3. Copia la connection string **sin `-pooler`** → esa es `DIRECT_URL`.
 
-Configura estas dos apuntando a rutas **dentro del volumen persistente** que
-montes (no a rutas relativas del proyecto — el resto del filesystem del
-contenedor se descarta en cada redeploy):
+**Supabase** (supabase.com):
+1. Crea un proyecto.
+2. En *Project Settings → Database → Connection string*:
+   - Modo **Transaction** (puerto `6543`) → `DATABASE_URL`.
+   - Modo **Session** (puerto `5432`) → `DIRECT_URL`.
 
-| Variable | Valor recomendado |
-|---|---|
-| `DATABASE_URL` | `file:/data/prod.db` |
-| `UPLOADS_DIR` | `/data/uploads` |
+Ambas deben incluir `?sslmode=require` (Neon lo agrega solo; en Supabase
+revisa que esté presente).
 
-`/data` es el punto de montaje que se usa en los pasos de abajo; puedes usar
-otro nombre siempre que sea consistente entre el volumen y estas dos variables.
+## 2. Aplicar el schema a la base de datos nueva
 
----
+Desde tu máquina, con `DATABASE_URL` y `DIRECT_URL` apuntando a la base real
+(puedes ponerlas en tu `.env` local temporalmente, o exportarlas en la shell):
 
-## Railway
+```bash
+npx prisma migrate deploy
+```
 
-1. **New Project → Deploy from GitHub repo**, elige este repositorio.
-2. Railway detecta el `Dockerfile` automáticamente y lo usa para el build
-   (no hace falta configurar nada del build command).
-3. **Agrega un Volume**: en el servicio, pestaña *Settings → Volumes → New Volume*.
-   Móntalo en `/data`.
-4. **Variables de entorno**: pestaña *Variables*, agrega:
-   - `DATABASE_URL=file:/data/prod.db`
-   - `UPLOADS_DIR=/data/uploads`
-5. Railway expone el puerto automáticamente (el contenedor escucha en `3000`,
-   ver `EXPOSE 3000` en el Dockerfile) — no necesitas configurar el puerto manualmente.
-6. Deploy. En los logs deberías ver `Applying migration ...` seguido de
-   `Ready in ...ms`.
+Esto crea todas las tablas (`prisma/migrations/20260709000000_init_postgres`).
+Es seguro correrlo varias veces — no reaplica migraciones ya aplicadas.
 
-## Render
-
-1. **New → Web Service**, conecta este repositorio.
-2. **Runtime**: elige *Docker* (Render detecta el `Dockerfile`).
-3. **Agrega un Disk**: pestaña *Disks → Add Disk*. Móntalo en `/data`
-   (elige el tamaño según cuántas fotos de evidencia esperas acumular).
-4. **Environment**: agrega las mismas dos variables:
-   - `DATABASE_URL=file:/data/prod.db`
-   - `UPLOADS_DIR=/data/uploads`
-5. Render detecta el puerto expuesto automáticamente. Deploy.
-
----
-
-## Primera carga de datos
-
-Después del primer deploy la base queda vacía (las migraciones crean las
-tablas, pero no hay datos). Para cargar el set de ejemplo, corre el seed
-**desde tu máquina apuntando a la base remota**, o agrega un paso manual desde
-la consola/shell de la plataforma (ambas ofrecen un "Shell"/"Run command"
-sobre el servicio ya desplegado):
+Para cargar el set de datos de ejemplo:
 
 ```bash
 npm run seed
 ```
 
-Esto usa el mismo `DATABASE_URL` configurado en el entorno donde lo corras.
+## 3. Crear el Blob Store para evidencia fotográfica
+
+En el dashboard de Vercel: **Storage → Create → Blob**. Conéctalo a este
+proyecto — Vercel inyecta automáticamente la variable `BLOB_READ_WRITE_TOKEN`
+en producción, no hace falta configurarla a mano.
+
+## 4. Variables de entorno en Vercel
+
+**Project Settings → Environment Variables:**
+
+| Variable | Valor |
+|---|---|
+| `DATABASE_URL` | connection string **pooled** (Neon `-pooler` / Supabase puerto 6543) |
+| `DIRECT_URL` | connection string **directa** (Neon sin `-pooler` / Supabase puerto 5432) |
+| `BLOB_READ_WRITE_TOKEN` | la inyecta Vercel solo al conectar el Blob Store (paso 3) — no la agregues a mano |
+
+No hace falta `UPLOADS_DIR` en Vercel (solo aplica al fallback de disco local
+en desarrollo).
+
+## 5. Deploy
+
+Conecta el repo en Vercel (Import Project) y despliega — no requiere
+configuración de build adicional:
+
+- `postinstall` corre `prisma generate` automáticamente.
+- El build (`next build`) no toca la base de datos (`force-dynamic` en el
+  layout raíz evita el prerenderizado estático de páginas que leen de la BD).
+- Las migraciones **no** corren en el build de Vercel — se aplican una vez
+  manualmente (paso 2) o desde tu máquina cada vez que agregues una migración
+  nueva, apuntando `DIRECT_URL` a producción.
+
+## Desarrollo local
+
+Podés usar la misma base Neon/Supabase también en desarrollo (más simple), o
+levantar Postgres local. En ambos casos definí `DATABASE_URL` y `DIRECT_URL`
+en tu `.env` (ver `.env.example`). Sin `BLOB_READ_WRITE_TOKEN` configurado,
+las fotos de evidencia se guardan en `./uploads` y se sirven vía
+`/api/uploads/[filename]` — solo para desarrollo, no persiste en Vercel.
 
 ## Verificar que quedó bien
 
-- Los logs de arranque deben mostrar `All migrations have been successfully applied.`
-  seguido de `Ready in ...ms` — si ves un error de SQLite ahí, revisa que
-  `DATABASE_URL` apunte dentro del volumen montado (no a una ruta que no existe).
-- Crea un registro (por ejemplo una Ciudad), luego fuerza un redeploy manual
-  sin cambiar código — si el registro sigue ahí, el volumen persistente está
-  bien configurado. Si desapareció, el volumen no se montó donde `DATABASE_URL`
-  espera.
-- Sube una foto de evidencia en una Ejecución y confirma que se ve después de
-  un redeploy (mismo chequeo, pero para `UPLOADS_DIR`).
+- El deploy no debe fallar en `prisma generate` (postinstall) ni en el build.
+- Abrí la app y confirmá que el Dashboard carga KPIs (si corriste el seed).
+- Creá un registro (por ejemplo una Ciudad) y confirmá que sigue ahí después
+  de un redeploy — así confirmás que apunta a la base real, no a una vacía.
+- Subí una foto de evidencia en una Ejecución y confirmá que se ve después de
+  un redeploy — así confirmás que el Blob Store quedó bien conectado.
