@@ -13,7 +13,7 @@ export function KpiCard({
   action?: ReactNode;
 }) {
   return (
-    <Card>
+    <Card className="transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:ring-primary/20">
       <CardHeader className="flex flex-row items-start justify-between gap-2 pb-2">
         <CardDescription>{label}</CardDescription>
         {action}

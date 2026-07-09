@@ -1,17 +1,17 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ClipboardCheck } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { KpiCard } from "@/components/kpi-card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { obtenerEjecucion } from "@/server/modules/ejecuciones/service";
-import { listarCategoriasCalidad } from "@/server/modules/categorias-calidad/service";
-import { listarCampanas } from "@/server/modules/campanas/service";
-import { listarTiendas } from "@/server/modules/tiendas/service";
-import { listarProductos } from "@/server/modules/productos/service";
-import { listarResponsables } from "@/server/modules/responsables/service";
+import { listarCategoriasCalidadChecklist } from "@/server/modules/categorias-calidad/service";
+import { listarCampanasOpciones } from "@/server/modules/campanas/service";
+import { listarTiendasOpciones } from "@/server/modules/tiendas/service";
+import { listarProductosOpciones } from "@/server/modules/productos/service";
+import { listarResponsablesOpciones } from "@/server/modules/responsables/service";
 import { formatFecha, formatMoneda, formatPorcentaje, formatRoas } from "@/lib/format";
 import { EditarEjecucionDialog } from "../editar-ejecucion-dialog";
 import { eliminarEjecucionAction } from "../actions";
@@ -29,11 +29,11 @@ export default async function EjecucionDetallePage({
   const [ejecucion, categorias, campanas, tiendas, productos, responsables] =
     await Promise.all([
       obtenerEjecucion(ejecucionId),
-      listarCategoriasCalidad(),
-      listarCampanas(),
-      listarTiendas(),
-      listarProductos(),
-      listarResponsables(),
+      listarCategoriasCalidadChecklist(),
+      listarCampanasOpciones(),
+      listarTiendasOpciones(),
+      listarProductosOpciones(),
+      listarResponsablesOpciones(),
     ]);
 
   if (!ejecucion) notFound();
@@ -57,6 +57,7 @@ export default async function EjecucionDetallePage({
           }
         />
         <PageHeader
+          icon={ClipboardCheck}
           title={`${ejecucion.tienda.nombre} · ${ejecucion.producto.nombre}`}
           description={`Campaña: ${ejecucion.campana.nombre} · Responsable: ${ejecucion.responsable.nombre}`}
           actions={

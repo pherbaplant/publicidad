@@ -1,3 +1,4 @@
+import { Users } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { listarResponsables } from "@/server/modules/responsables/service";
 import { ResponsablesTable } from "./responsables-table";
@@ -9,6 +10,7 @@ export default async function ResponsablesPage() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
+        icon={Users}
         title="Responsables"
         description="Equipo de mercadeo/publicidad a cargo de ejecutar y supervisar campañas."
         actions={<NuevoResponsableDialog />}

@@ -8,6 +8,14 @@ export function listarCiudades() {
   });
 }
 
+/** Lista liviana (solo id + nombre) para poblar selects — evita el _count al no necesitarlo. */
+export function listarCiudadesOpciones() {
+  return prisma.ciudad.findMany({
+    orderBy: { nombre: "asc" },
+    select: { id: true, nombre: true },
+  });
+}
+
 export function crearCiudad(data: CiudadInput) {
   return prisma.ciudad.create({ data });
 }

@@ -12,6 +12,14 @@ export function listarResponsables() {
   });
 }
 
+/** Lista liviana (solo id + nombre) para poblar selects. */
+export function listarResponsablesOpciones() {
+  return prisma.responsable.findMany({
+    orderBy: { nombre: "asc" },
+    select: { id: true, nombre: true },
+  });
+}
+
 export function crearResponsable(data: ResponsableInput) {
   return prisma.responsable.create({ data: normalizar(data) });
 }

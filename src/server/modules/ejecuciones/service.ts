@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { recalcularCampana } from "@/server/modules/calculos/recompute";
 import type { EjecucionInput } from "./schema";
 
+/** Todas las ejecuciones sin paginar — solo para exportaciones (Excel). */
 export function listarEjecuciones() {
   return prisma.ejecucion.findMany({
     orderBy: { createdAt: "desc" },
@@ -10,9 +11,37 @@ export function listarEjecuciones() {
       tienda: { include: { ciudad: true } },
       producto: true,
       responsable: true,
-      evaluaciones: true,
     },
   });
+}
+
+export const EJECUCIONES_POR_PAGINA = 25;
+
+/** Listado paginado para la vista de tabla — evita cargar todo el dataset en una sola página. */
+export async function listarEjecucionesPaginado(pagina: number) {
+  const paginaSegura = Math.max(1, pagina);
+
+  const [ejecuciones, total] = await Promise.all([
+    prisma.ejecucion.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        campana: { select: { id: true, nombre: true } },
+        tienda: { include: { ciudad: true } },
+        producto: true,
+        responsable: true,
+      },
+      skip: (paginaSegura - 1) * EJECUCIONES_POR_PAGINA,
+      take: EJECUCIONES_POR_PAGINA,
+    }),
+    prisma.ejecucion.count(),
+  ]);
+
+  return {
+    ejecuciones,
+    total,
+    totalPaginas: Math.max(1, Math.ceil(total / EJECUCIONES_POR_PAGINA)),
+    pagina: paginaSegura,
+  };
 }
 
 export function obtenerEjecucion(id: number) {

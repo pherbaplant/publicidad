@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LayoutDashboard } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { KpiCard } from "@/components/kpi-card";
 import { SemaforoBadge } from "@/components/semaforo-badge";
@@ -10,10 +11,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { listarCampanas } from "@/server/modules/campanas/service";
-import { listarCiudades } from "@/server/modules/ciudades/service";
-import { listarProductos } from "@/server/modules/productos/service";
-import { listarResponsables } from "@/server/modules/responsables/service";
+import { listarCampanasOpciones } from "@/server/modules/campanas/service";
+import { listarCiudadesOpciones } from "@/server/modules/ciudades/service";
+import { listarProductosOpciones } from "@/server/modules/productos/service";
+import { listarResponsablesOpciones } from "@/server/modules/responsables/service";
 import { obtenerDatosDashboard } from "@/server/modules/dashboard/service";
 import { formatMoneda, formatPorcentaje, formatRoas } from "@/lib/format";
 import { DashboardFiltros } from "./dashboard-filtros";
@@ -42,16 +43,17 @@ export default async function DashboardPage({
   };
 
   const [campanas, ciudades, productos, responsables, datos] = await Promise.all([
-    listarCampanas(),
-    listarCiudades(),
-    listarProductos(),
-    listarResponsables(),
+    listarCampanasOpciones(),
+    listarCiudadesOpciones(),
+    listarProductosOpciones(),
+    listarResponsablesOpciones(),
     obtenerDatosDashboard(filtros),
   ]);
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
+        icon={LayoutDashboard}
         title="Dashboard"
         description="Evaluación ejecutiva del desempeño de campañas publicitarias en tienda."
       />
@@ -97,7 +99,7 @@ export default async function DashboardPage({
             No hay campañas con datos para los filtros seleccionados.
           </p>
         ) : (
-          <div className="rounded-lg border">
+          <div className="overflow-x-auto rounded-lg border">
             <Table>
               <TableHeader>
                 <TableRow>

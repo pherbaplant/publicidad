@@ -30,6 +30,7 @@ export async function recalcularCampana(campanaId: number) {
   const tiendasEjecutadas = new Set<number>();
   let ejecucionesConFecha = 0;
   let ejecucionesATiempo = 0;
+  const actualizacionesEjecucion: ReturnType<typeof prisma.ejecucion.update>[] = [];
 
   for (const ejecucion of campana.ejecuciones) {
     const roas = calcularRoas(ejecucion.ventasAtribuidas, ejecucion.inversionAsignada);
@@ -41,10 +42,12 @@ export async function recalcularCampana(campanaId: number) {
     );
 
     if (roas !== ejecucion.roas || scoreCalidad !== ejecucion.scoreCalidad) {
-      await prisma.ejecucion.update({
-        where: { id: ejecucion.id },
-        data: { roas, scoreCalidad },
-      });
+      actualizacionesEjecucion.push(
+        prisma.ejecucion.update({
+          where: { id: ejecucion.id },
+          data: { roas, scoreCalidad },
+        })
+      );
     }
 
     sumVentas += ejecucion.ventasAtribuidas ?? 0;
@@ -63,6 +66,10 @@ export async function recalcularCampana(campanaId: number) {
       const limite = ejecucion.fechaPlanificada ?? campana.fechaFin;
       if (ejecucion.fechaEjecucion <= limite) ejecucionesATiempo += 1;
     }
+  }
+
+  if (actualizacionesEjecucion.length > 0) {
+    await prisma.$transaction(actualizacionesEjecucion);
   }
 
   const roas = sumInversion > 0 ? sumVentas / sumInversion : null;

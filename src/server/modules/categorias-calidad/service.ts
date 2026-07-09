@@ -8,6 +8,14 @@ export function listarCategoriasCalidad() {
   });
 }
 
+/** Lista liviana (sin _count) para renderizar el checklist de calidad en una Ejecución. */
+export function listarCategoriasCalidadChecklist() {
+  return prisma.categoriaCalidad.findMany({
+    orderBy: { nombre: "asc" },
+    select: { id: true, nombre: true, descripcion: true, peso: true },
+  });
+}
+
 export function crearCategoriaCalidad(data: CategoriaCalidadInput) {
   return prisma.categoriaCalidad.create({ data });
 }

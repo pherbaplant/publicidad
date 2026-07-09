@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, Megaphone, Plus } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { KpiCard } from "@/components/kpi-card";
 import { SemaforoBadge } from "@/components/semaforo-badge";
@@ -57,6 +57,7 @@ export default async function CampanaDetallePage({
           }
         />
         <PageHeader
+          icon={Megaphone}
           title={campana.nombre}
           description={campana.objetivo ?? undefined}
           actions={
@@ -132,7 +133,7 @@ export default async function CampanaDetallePage({
           Todavía no hay ejecuciones registradas para esta campaña.
         </p>
       ) : (
-        <div className="rounded-lg border">
+        <div className="overflow-x-auto rounded-lg border">
           <Table>
             <TableHeader>
               <TableRow>

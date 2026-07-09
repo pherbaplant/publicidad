@@ -125,7 +125,7 @@ export function CategoriasTable({ categorias }: { categorias: Categoria[] }) {
   }
 
   return (
-    <div className="rounded-lg border">
+    <div className="overflow-x-auto rounded-lg border">
       <Table>
         <TableHeader>
           <TableRow>

@@ -9,6 +9,14 @@ export function listarCampanas() {
   });
 }
 
+/** Lista liviana (solo id + nombre) para poblar selects. */
+export function listarCampanasOpciones() {
+  return prisma.campana.findMany({
+    orderBy: { fechaInicio: "desc" },
+    select: { id: true, nombre: true },
+  });
+}
+
 export function obtenerCampana(id: number) {
   return prisma.campana.findUnique({
     where: { id },

@@ -8,6 +8,14 @@ export function listarProductos() {
   });
 }
 
+/** Lista liviana (solo id + nombre) para poblar selects. */
+export function listarProductosOpciones() {
+  return prisma.producto.findMany({
+    orderBy: { nombre: "asc" },
+    select: { id: true, nombre: true },
+  });
+}
+
 export function crearProducto(data: ProductoInput) {
   return prisma.producto.create({ data });
 }

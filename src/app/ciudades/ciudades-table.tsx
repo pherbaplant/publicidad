@@ -95,7 +95,7 @@ export function CiudadesTable({ ciudades }: { ciudades: Ciudad[] }) {
   }
 
   return (
-    <div className="rounded-lg border">
+    <div className="overflow-x-auto rounded-lg border">
       <Table>
         <TableHeader>
           <TableRow>
