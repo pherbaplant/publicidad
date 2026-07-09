@@ -187,6 +187,10 @@ route handlers — estos últimos solo orquestan la llamada al módulo correspon
 - **Stack**: Next.js + TypeScript + Tailwind/shadcn + Prisma + SQLite — **aprobado**.
 - **Pesos del Índice de Desempeño**: 40% incremento de ventas, 30% calidad de ejecución,
   20% cobertura de tiendas ejecutadas, 10% cumplimiento de tiempos — **confirmado**.
+- **Hosting**: dado que SQLite necesita un disco persistente (incompatible con
+  plataformas serverless como Vercel), se despliega en un host con proceso +
+  volumen persistente (Railway o Render) vía el `Dockerfile` del repo — ver
+  `DEPLOY.md` para los pasos exactos.
 
 ## Puntos abiertos a confirmar con el usuario
 

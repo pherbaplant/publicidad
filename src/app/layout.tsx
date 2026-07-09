@@ -26,6 +26,14 @@ export const metadata: Metadata = {
     "Evaluación ejecutiva del desempeño de campañas publicitarias en tienda.",
 };
 
+// Todas las páginas leen directamente de SQLite en cada request (vía Server
+// Components). Sin esto, `next build` intentaría prerenderizar los catálogos
+// como HTML estático usando la base de datos disponible en build time —lo
+// cual falla si el disco persistente/DATABASE_URL de producción todavía no
+// existe en ese momento— y luego serviría esa foto congelada hasta la
+// siguiente revalidación.
+export const dynamic = "force-dynamic";
+
 export default function RootLayout({
   children,
 }: Readonly<{

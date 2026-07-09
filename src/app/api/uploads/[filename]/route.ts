@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { getUploadsDir } from "@/lib/uploads-dir";
 
 const MIME: Record<string, string> = {
   ".jpg": "image/jpeg",
@@ -15,7 +16,7 @@ export async function GET(
   const { filename } = await params;
   const nombreSeguro = path.basename(filename);
   const extension = path.extname(nombreSeguro).toLowerCase();
-  const rutaArchivo = path.join(process.cwd(), "uploads", nombreSeguro);
+  const rutaArchivo = path.join(getUploadsDir(), nombreSeguro);
 
   try {
     const datos = await readFile(rutaArchivo);

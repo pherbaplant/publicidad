@@ -1,0 +1,9 @@
+node_modules
+.next
+.git
+dev.db
+dev.db-journal
+uploads/*
+!uploads/.gitkeep
+.env
+.env.local
