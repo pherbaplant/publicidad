@@ -32,17 +32,24 @@ revisa que esté presente).
 
 ## 2. Aplicar el schema a la base de datos nueva
 
-Desde tu máquina, con `DATABASE_URL` y `DIRECT_URL` apuntando a la base real
-(puedes ponerlas en tu `.env` local temporalmente, o exportarlas en la shell):
+El script `build` (`prisma generate && prisma migrate deploy && next build`,
+ver package.json) aplica las migraciones pendientes automáticamente en cada
+build de Vercel — no hace falta correr nada a mano para crear las tablas.
+`prisma migrate deploy` nunca borra datos ni reaplica migraciones ya
+aplicadas; si la conexión falla, el build falla con un error claro
+(`P1001: Can't reach database server`) en vez de desplegar algo roto en
+silencio.
+
+Si preferís aplicarlas manualmente desde tu máquina antes del primer deploy
+(por ejemplo para revisar el resultado vos mismo), con `DATABASE_URL` y
+`DIRECT_URL` apuntando a la base real:
 
 ```bash
 npx prisma migrate deploy
 ```
 
-Esto crea todas las tablas (`prisma/migrations/20260709000000_init_postgres`).
-Es seguro correrlo varias veces — no reaplica migraciones ya aplicadas.
-
-Para cargar el set de datos de ejemplo:
+Para cargar el set de datos de ejemplo (esto sí es manual, correlo desde tu
+máquina apuntando a la base real):
 
 ```bash
 npm run seed
@@ -73,11 +80,14 @@ Conecta el repo en Vercel (Import Project) y despliega — no requiere
 configuración de build adicional:
 
 - `postinstall` corre `prisma generate` automáticamente.
-- El build (`next build`) no toca la base de datos (`force-dynamic` en el
-  layout raíz evita el prerenderizado estático de páginas que leen de la BD).
-- Las migraciones **no** corren en el build de Vercel — se aplican una vez
-  manualmente (paso 2) o desde tu máquina cada vez que agregues una migración
-  nueva, apuntando `DIRECT_URL` a producción.
+- El script `build` corre `prisma migrate deploy` antes de `next build`, así
+  que las tablas se crean/actualizan solas en cada deploy (ver paso 2). Para
+  esto `DIRECT_URL` (conexión sin pooler) tiene que estar bien configurada en
+  Vercel — si no puede conectar, el build falla con un error claro en vez de
+  desplegar algo roto.
+- `next build` en sí no lee de la base de datos más allá de eso
+  (`force-dynamic` en el layout raíz evita el prerenderizado estático de
+  páginas que consultan la BD).
 
 ## Desarrollo local
 
