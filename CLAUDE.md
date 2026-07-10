@@ -27,12 +27,12 @@ rápido qué campañas/tiendas/responsables funcionaron y cuáles no.
 | UI/estilos | Tailwind CSS + shadcn/ui | Componentes limpios y ejecutivos out-of-the-box (cards, tablas, forms), evita "look de web antigua" |
 | Gráficos | Recharts | Gráficos claros para KPIs (barras, líneas, dona) |
 | Backend | API routes de Next.js (Node.js) o Express separado | Evita levantar un segundo servicio; todo en un solo proyecto |
-| Base de datos | SQLite local persistente (`better-sqlite3` o `prisma` + adapter SQLite) | Requisito explícito: local, persistente, sin servidor externo |
-| ORM/queries | Prisma (o SQL directo con better-sqlite3) | Migraciones ordenadas, tipado, mantenibilidad |
+| Base de datos | Postgres administrado (Neon o Supabase, capa gratuita) | Requisito original era SQLite local, pero se migró a Postgres para permitir despliegue gratuito en Vercel (serverless, filesystem efímero incompatible con SQLite en disco) |
+| ORM/queries | Prisma + `@prisma/adapter-pg` | Migraciones ordenadas, tipado, mantenibilidad |
 | Validación de formularios | Zod + React Hook Form | Validaciones consistentes cliente/servidor |
 | Exportación PDF | `pdf-lib` o `@react-pdf/renderer` | Reportes ejecutivos descargables |
 | Exportación Excel | `exceljs` o `xlsx` (SheetJS) | Exportar tablas de datos |
-| Carga de imágenes | Almacenamiento en filesystem local (`/uploads`) + referencia de ruta en SQLite | Evidencia fotográfica de ejecución en tienda |
+| Carga de imágenes | Vercel Blob en producción; filesystem local (`/uploads`) solo en desarrollo | Evidencia fotográfica de ejecución en tienda — el filesystem de Vercel es efímero |
 | Autenticación (si aplica) | (propuesta) simple, por rol: Admin / Responsable de campaña / Solo lectura | No especificado en el requerimiento original |
 
 ---
@@ -141,7 +141,7 @@ evalúe solo por una dimensión:
 
 ## Requisitos técnicos
 
-- Base de datos SQLite local persistente (no en memoria).
+- Base de datos persistente (Postgres administrado — ver "Decisiones confirmadas").
 - CRUD completo en todos los módulos (Campañas, Tiendas, Productos, Ciudades, Responsables, Ejecuciones, Calidad de ejecución).
 - Validaciones de formularios en cliente y servidor.
 - Cálculos automáticos de ROAS e Índice de Desempeño (no manuales).
@@ -155,8 +155,8 @@ evalúe solo por una dimensión:
 ## Estructura técnica del proyecto (Paso 1 — completado)
 
 Proyecto base creado con `create-next-app` (App Router, TypeScript, Tailwind v4) +
-`shadcn/ui` + Prisma 7 con driver adapter `@prisma/adapter-better-sqlite3` (SQLite local
-persistente en `dev.db`, no committeado; se recrea con `npx prisma migrate dev`).
+`shadcn/ui` + Prisma 7 con driver adapter `@prisma/adapter-pg` (Postgres administrado
+— Neon o Supabase; ver "Decisiones confirmadas" y `DEPLOY.md`).
 
 ```
 prisma/
@@ -164,18 +164,19 @@ prisma/
                       # Ejecucion, CategoriaCalidad, EvaluacionCalidad,
                       # EvidenciaFotografica, Configuracion (pesos/umbrales editables)
   migrations/
-prisma.config.ts      # datasource + adapter better-sqlite3 para `prisma migrate`
+prisma.config.ts      # datasource (DIRECT_URL, conexión directa) para `prisma migrate`
 src/
   app/                # rutas Next.js (páginas + futuras API routes)
   components/ui/      # primitivos shadcn/ui
   lib/
-    prisma.ts          # singleton de PrismaClient con el adapter better-sqlite3
+    prisma.ts          # singleton de PrismaClient con el adapter-pg (pool pooled DATABASE_URL)
     utils.ts            # helper de shadcn (cn)
   generated/prisma/     # cliente Prisma generado (gitignored)
   server/modules/<dominio>/   # (a crear por módulo: campanas, tiendas, ciudades,
                               # productos, responsables, ejecuciones, calidad —
                               # lógica de negocio y acceso a datos separada de la UI)
-uploads/               # evidencia fotográfica (gitignored salvo .gitkeep)
+uploads/               # evidencia fotográfica en desarrollo local (gitignored salvo
+                        # .gitkeep) — en producción se usa Vercel Blob
 ```
 
 Convención: la lógica de negocio (cálculo de ROAS, Índice de Desempeño, agregaciones)
@@ -184,9 +185,19 @@ route handlers — estos últimos solo orquestan la llamada al módulo correspon
 
 ## Decisiones confirmadas
 
-- **Stack**: Next.js + TypeScript + Tailwind/shadcn + Prisma + SQLite — **aprobado**.
+- **Stack**: Next.js + TypeScript + Tailwind/shadcn + Prisma + Postgres — **aprobado**.
 - **Pesos del Índice de Desempeño**: 40% incremento de ventas, 30% calidad de ejecución,
   20% cobertura de tiendas ejecutadas, 10% cumplimiento de tiempos — **confirmado**.
+- **Base de datos**: Postgres administrado (Neon o Supabase, capa gratuita) en vez de
+  SQLite, específicamente para poder desplegar en Vercel (serverless, filesystem
+  efímero — incompatible con SQLite en disco). Acceso vía `@prisma/adapter-pg`
+  (`src/lib/prisma.ts`), con conexión pooled para runtime y directa
+  (`DIRECT_URL`) para migraciones.
+- **Evidencia fotográfica**: por el mismo motivo (filesystem efímero en Vercel),
+  las fotos se suben a Vercel Blob en producción (`BLOB_READ_WRITE_TOKEN`) y caen a
+  disco local (`/uploads`) solo en desarrollo sin ese token configurado.
+- **Hosting**: Vercel — ver `DEPLOY.md` para los pasos exactos (crear la base en
+  Neon/Supabase, el Blob Store, y las variables de entorno).
 
 ## Puntos abiertos a confirmar con el usuario
 

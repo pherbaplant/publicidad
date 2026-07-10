@@ -110,7 +110,11 @@ export function CalificarCategoriaDialog({
               {evaluacionExistente.evidencias.map((evidencia) => (
                 <Image
                   key={evidencia.id}
-                  src={`/api/uploads/${evidencia.rutaArchivo}`}
+                  src={
+                    evidencia.rutaArchivo.startsWith("http")
+                      ? evidencia.rutaArchivo
+                      : `/api/uploads/${evidencia.rutaArchivo}`
+                  }
                   alt="Evidencia de ejecución"
                   width={64}
                   height={64}
