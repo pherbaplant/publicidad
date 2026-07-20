@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dashboard de Métricas Ads — Herbaplant</title>
+
+<!-- React 18 -->
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<!-- Recharts (requiere prop-types) -->
+<script src="https://unpkg.com/prop-types/prop-types.min.js"></script>
+<script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
+<!-- SheetJS (lectura de XLSX/XLS) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- Babel standalone (JSX en el navegador) -->
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #333333;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+  }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+  /* Header */
+  .header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    border-radius: 12px;
+    padding: 30px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .header h1 { margin: 0 0 6px 0; font-size: 28px; font-weight: bold; }
+  .header p { margin: 0; font-size: 14px; opacity: 0.9; }
+
+  /* Upload */
+  .upload-section {
+    background: #fff;
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 15px;
+  }
+  .upload-section input[type="file"] {
+    flex: 1;
+    min-width: 220px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+  }
+  .upload-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .upload-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102,126,234,0.4);
+  }
+  .upload-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+  /* Messages */
+  .message {
+    padding: 14px 18px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    border-left: 4px solid;
+  }
+  .message-success { background: #e8f5e9; color: #2e7d32; border-left-color: #2e7d32; }
+  .message-error { background: #ffebee; color: #c62828; border-left-color: #c62828; }
+
+  /* Summary cards */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  .summary-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border-top: 4px solid #667eea;
+  }
+  .summary-card.c-spend { border-top-color: #667eea; }
+  .summary-card.c-impr { border-top-color: #764ba2; }
+  .summary-card.c-clicks { border-top-color: #f093fb; }
+  .summary-card.c-ctr { border-top-color: #4facfe; }
+  .summary-card .value { font-size: 28px; font-weight: bold; margin-bottom: 4px; }
+  .summary-card .subtitle { font-size: 14px; color: #999; }
+
+  /* Charts */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  .chart-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .chart-card h3 { margin: 0 0 15px 0; font-size: 18px; font-weight: bold; }
+  .recharts-tooltip-wrapper { z-index: 10; }
+  .custom-tooltip {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 10px 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    font-size: 13px;
+  }
+  .custom-tooltip .tt-label { font-weight: bold; margin-bottom: 4px; }
+
+  /* Table */
+  .table-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
+  }
+  .table-card h3 { margin: 0 0 15px 0; font-size: 18px; font-weight: bold; }
+  .table-scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  thead th {
+    background: #f8f9fa;
+    text-align: left;
+    padding: 12px 15px;
+    font-weight: bold;
+    white-space: nowrap;
+    border-bottom: 2px solid #eee;
+  }
+  tbody td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #eee;
+    white-space: nowrap;
+  }
+  tbody tr:nth-child(even) { background: #fafbfc; }
+  tbody tr:hover { background: #f8f9fa; }
+  .campaign-name { font-weight: bold; }
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: bold;
+  }
+  .badge-ctr { background: #e8f5e9; color: #2e7d32; }
+  .badge-freq { background: #f0e7fa; color: #764ba2; }
+
+  /* Empty state */
+  .empty-state {
+    background: #fff;
+    border-radius: 12px;
+    padding: 40px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    color: #999;
+  }
+  .empty-state svg { margin-bottom: 15px; opacity: 0.5; }
+  .empty-state .empty-title { font-size: 18px; color: #555; margin-bottom: 8px; font-weight: bold; }
+  .empty-state .empty-subtitle { font-size: 13px; color: #999; max-width: 480px; margin: 0 auto; line-height: 1.6; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .header { padding: 20px; }
+    .header h1 { font-size: 22px; }
+    .summary-grid { grid-template-columns: 1fr; }
+    .charts-grid { grid-template-columns: 1fr; }
+    table { font-size: 12px; }
+    thead th, tbody td { padding: 8px 10px; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/plain" id="app-source">
+const { useState, useMemo, useRef, useEffect } = React;
+const {
+  BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer
+} = Recharts;
+
+// Alias de encabezados aceptados por columna (comparados sin tildes y en minúsculas)
+const COLUMN_ALIASES = {
+  campana: ['campana', 'campaign name', 'campaign'],
+  gasto: ['gasto', 'spend'],
+  impresiones: ['impresiones', 'impressions'],
+  clics: ['clics', 'clicks'],
+  ctr: ['ctr'],
+  costoResultado: ['costo/resultado', 'costo resultado', 'cost per result', 'cost/result'],
+  alcance: ['alcance', 'reach'],
+  frecuencia: ['frecuencia', 'frequency'],
+  tasaResultados: ['tasa de resultados', 'result rate'],
+};
+
+function normalizeHeader(h) {
+  return String(h)
+    .toLowerCase()
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, ''); // quita tildes para comparar "Campaña" con "campana"
+}
+
+function toNumber(v) {
+  if (v === null || v === undefined || v === '') return 0;
+  const n = typeof v === 'number' ? v : parseFloat(String(v).replace(',', '.'));
+  return isNaN(n) ? 0 : n;
+}
+
+// Mapea los encabezados reales del archivo a los campos internos usando COLUMN_ALIASES
+function mapColumns(headers) {
+  const map = {};
+  headers.forEach((h) => {
+    const norm = normalizeHeader(h);
+    for (const [field, aliases] of Object.entries(COLUMN_ALIASES)) {
+      if (aliases.includes(norm)) { map[field] = h; break; }
+    }
+  });
+  return map;
+}
+
+function truncateName(name, max = 10) {
+  if (!name) return '';
+  return name.length > max ? name.slice(0, max) + '…' : name;
+}
+
+const fmtCurrency = (n) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
+const fmtCurrency4 = (n) => '$' + n.toFixed(4);
+const fmtCompact = (n) => new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(n);
+const fmtInt = (n) => new Intl.NumberFormat('en-US').format(Math.round(n));
+const fmtPct = (n) => n.toFixed(2) + '%';
+
+function EmptyState() {
+  return (
+    <div className="empty-state">
+      <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="1.5">
+        <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6M9 11h.01M15 11h.01M9 15h.01M15 15h.01" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      <div className="empty-title">Carga un archivo XLSX para ver el dashboard</div>
+      <div className="empty-subtitle">
+        Formato esperado: Campaña, Gasto, Impresiones, Clics, CTR, Costo/Resultado, Alcance, Frecuencia
+        (también se aceptan encabezados en inglés como Campaign, Spend, Impressions, Clicks, Reach, Frequency).
+      </div>
+    </div>
+  );
+}
+
+function SpendTooltip({ active, payload, label }) {
+  if (!active || !payload || !payload.length) return null;
+  return (
+    <div className="custom-tooltip">
+      <div className="tt-label">{label}</div>
+      <div>{fmtCurrency(payload[0].value)}</div>
+    </div>
+  );
+}
+
+function CtrTooltip({ active, payload, label }) {
+  if (!active || !payload || !payload.length) return null;
+  return (
+    <div className="custom-tooltip">
+      <div className="tt-label">{label}</div>
+      <div>{payload[0].value.toFixed(2)}%</div>
+    </div>
+  );
+}
+
+function App() {
+  const [campaigns, setCampaigns] = useState([]);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [message, setMessage] = useState(null); // { type: 'success' | 'error', text }
+  const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    if (!message) return;
+    const t = setTimeout(() => setMessage(null), 4000);
+    return () => clearTimeout(t);
+  }, [message]);
+
+  function handleFileSelect(e) {
+    setSelectedFile(e.target.files[0] || null);
+  }
+
+  function handleUpload() {
+    if (!selectedFile) {
+      setMessage({ type: 'error', text: 'Selecciona un archivo XLSX antes de cargar.' });
+      return;
+    }
+    setLoading(true);
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const data = new Uint8Array(evt.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[firstSheetName];
+        const rows = XLSX.utils.sheet_to_json(sheet, { defval: null });
+
+        if (!rows || rows.length === 0) {
+          setMessage({ type: 'error', text: 'El archivo está vacío o no tiene datos.' });
+          setLoading(false);
+          return;
+        }
+
+        const headers = Object.keys(rows[0]);
+        const colMap = mapColumns(headers);
+
+        if (!colMap.campana) {
+          setMessage({ type: 'error', text: 'El archivo no contiene la columna requerida "Campaña".' });
+          setLoading(false);
+          return;
+        }
+
+        const parsed = rows
+          .map((row) => ({
+            campana: colMap.campana ? String(row[colMap.campana] ?? '').trim() : '',
+            gasto: toNumber(colMap.gasto ? row[colMap.gasto] : 0),
+            impresiones: toNumber(colMap.impresiones ? row[colMap.impresiones] : 0),
+            clics: toNumber(colMap.clics ? row[colMap.clics] : 0),
+            ctr: toNumber(colMap.ctr ? row[colMap.ctr] : 0),
+            costoResultado: toNumber(colMap.costoResultado ? row[colMap.costoResultado] : 0),
+            alcance: toNumber(colMap.alcance ? row[colMap.alcance] : 0),
+            frecuencia: toNumber(colMap.frecuencia ? row[colMap.frecuencia] : 0),
+            tasaResultados: toNumber(colMap.tasaResultados ? row[colMap.tasaResultados] : 0),
+          }))
+          .filter((c) => c.campana !== '');
+
+        if (parsed.length === 0) {
+          setMessage({ type: 'error', text: 'No se encontraron filas válidas con nombre de campaña.' });
+          setLoading(false);
+          return;
+        }
+
+        setCampaigns(parsed);
+        setMessage({ type: 'success', text: `✓ Se cargaron ${parsed.length} campañas` });
+      } catch (err) {
+        setMessage({ type: 'error', text: 'No se pudo procesar el archivo. Verifica que sea un XLSX/XLS válido.' });
+      } finally {
+        setLoading(false);
+      }
+    };
+    reader.onerror = () => {
+      setMessage({ type: 'error', text: 'Ocurrió un error leyendo el archivo.' });
+      setLoading(false);
+    };
+    reader.readAsArrayBuffer(selectedFile);
+  }
+
+  // Totales consolidados: suma de gasto/impresiones/clics, promedio simple de CTR
+  const totals = useMemo(() => {
+    if (campaigns.length === 0) return { gasto: 0, impresiones: 0, clics: 0, ctrPromedio: 0 };
+    const gasto = campaigns.reduce((a, c) => a + c.gasto, 0);
+    const impresiones = campaigns.reduce((a, c) => a + c.impresiones, 0);
+    const clics = campaigns.reduce((a, c) => a + c.clics, 0);
+    const ctrPromedio = campaigns.reduce((a, c) => a + c.ctr, 0) / campaigns.length;
+    return { gasto, impresiones, clics, ctrPromedio };
+  }, [campaigns]);
+
+  const chartData = useMemo(
+    () => campaigns.map((c) => ({
+      name: truncateName(c.campana),
+      fullName: c.campana,
+      gasto: c.gasto,
+      ctr: c.ctr,
+    })),
+    [campaigns]
+  );
+
+  return (
+    <div className="container">
+      <div className="header">
+        <h1>Dashboard de Métricas Ads</h1>
+        <p>Herbaplant — Resumen ejecutivo de campañas (Meta Ads / Google Ads)</p>
+      </div>
+
+      <div className="upload-section">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".xlsx,.xls"
+          onChange={handleFileSelect}
+        />
+        <button className="upload-btn" onClick={handleUpload} disabled={loading}>
+          {loading ? 'Procesando...' : 'Cargar'}
+        </button>
+      </div>
+
+      {message && (
+        <div className={`message message-${message.type}`}>{message.text}</div>
+      )}
+
+      {campaigns.length === 0 ? (
+        <EmptyState />
+      ) : (
+        <React.Fragment>
+          <div className="summary-grid">
+            <div className="summary-card c-spend">
+              <div className="value">{fmtCurrency(totals.gasto)}</div>
+              <div className="subtitle">Gasto Total</div>
+            </div>
+            <div className="summary-card c-impr">
+              <div className="value">{fmtCompact(totals.impresiones)}</div>
+              <div className="subtitle">Impresiones Totales</div>
+            </div>
+            <div className="summary-card c-clicks">
+              <div className="value">{fmtInt(totals.clics)}</div>
+              <div className="subtitle">Clics Totales</div>
+            </div>
+            <div className="summary-card c-ctr">
+              <div className="value">{fmtPct(totals.ctrPromedio)}</div>
+              <div className="subtitle">CTR Promedio</div>
+            </div>
+          </div>
+
+          <div className="charts-grid">
+            <div className="chart-card">
+              <h3>Gasto por Campaña</h3>
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+                  <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} />
+                  <Tooltip content={<SpendTooltip />} />
+                  <Bar dataKey="gasto" fill="#667eea" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="chart-card">
+              <h3>CTR por Campaña</h3>
+              <ResponsiveContainer width="100%" height={280}>
+                <LineChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+                  <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} />
+                  <Tooltip content={<CtrTooltip />} />
+                  <Line type="monotone" dataKey="ctr" stroke="#764ba2" strokeWidth={2} dot={{ r: 4 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          <div className="table-card">
+            <h3>Detalle de Campañas</h3>
+            <div className="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Campaña</th>
+                    <th>Gasto</th>
+                    <th>Impresiones</th>
+                    <th>Clics</th>
+                    <th>CTR</th>
+                    <th>Costo/Resultado</th>
+                    <th>Alcance</th>
+                    <th>Frecuencia</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {campaigns.map((c, i) => (
+                    <tr key={i}>
+                      <td className="campaign-name">{c.campana}</td>
+                      <td>{fmtCurrency(c.gasto)}</td>
+                      <td>{fmtInt(c.impresiones)}</td>
+                      <td>{fmtInt(c.clics)}</td>
+                      <td><span className="badge badge-ctr">{fmtPct(c.ctr)}</span></td>
+                      <td>{fmtCurrency4(c.costoResultado)}</td>
+                      <td>{fmtInt(c.alcance)}</td>
+                      <td><span className="badge badge-freq">{c.frecuencia.toFixed(2)}x</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </React.Fragment>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+
+<!-- Transforma el JSX anterior con el runtime "classic" (React.createElement) y lo ejecuta.
+     Se hace manualmente (en vez de dejar que Babel escanee el <script> automáticamente)
+     porque el runtime "automatic" por defecto de @babel/standalone genera un import de
+     "react/jsx-runtime", que no puede resolverse en un script plano sin bundler. -->
+<script>
+  var jsxSource = document.getElementById('app-source').textContent;
+  var transformed = Babel.transform(jsxSource, { presets: [['react', { runtime: 'classic' }]] }).code;
+  var appScript = document.createElement('script');
+  appScript.text = transformed;
+  document.body.appendChild(appScript);
+</script>
+</body>
+</html>
