@@ -1,8 +1,8 @@
-# Publicidad — Sistema de Evaluación de Desempeño de Campañas Publicitarias (Farmatodo)
+# Publicidad — Sistema de Evaluación de Desempeño de Campañas Publicitarias (Herbaplant)
 
 ## Objetivo del proyecto
 
-Sistema interno para que el equipo de mercadeo/publicidad de Farmatodo registre,
+Sistema interno para que el equipo de mercadeo/publicidad de Herbaplant registre,
 dé seguimiento y evalúe el desempeño de sus campañas publicitarias en tienda.
 
 **El objetivo NO es calcular un ROI financiero perfecto.** El objetivo es producir
@@ -40,7 +40,7 @@ rápido qué campañas/tiendas/responsables funcionaron y cuáles no.
 ## Módulos del sistema
 
 1. **Campañas** — CRUD de campañas publicitarias (nombre, período, objetivo, inversión total).
-2. **Tiendas** — Catálogo de tiendas Farmatodo (nombre, ciudad, formato).
+2. **Tiendas** — Catálogo de farmacias donde se ejecutan las campañas (ej. tiendas Farmatodo; nombre, ciudad, formato).
 3. **Ciudades** — Catálogo de ciudades donde operan las tiendas.
 4. **Productos** — Catálogo de productos/marcas promocionados en campañas.
 5. **Responsables** — Personas del equipo de mercadeo/publicidad a cargo de ejecutar y/o supervisar cada campaña por tienda.

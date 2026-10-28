@@ -12,7 +12,7 @@ export default async function CiudadesPage() {
       <PageHeader
         icon={MapPin}
         title="Ciudades"
-        description="Ciudades donde operan las tiendas Farmatodo."
+        description="Ciudades donde están las farmacias donde se ejecutan las campañas."
         actions={<NuevaCiudadDialog />}
       />
       <CiudadesTable ciudades={ciudades} />

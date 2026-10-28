@@ -31,7 +31,7 @@ export async function generarExcelGeneral(): Promise<ExcelJS.Buffer> {
   const ejecuciones = await listarEjecuciones();
 
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = "Sistema de Evaluación de Desempeño de Campañas — Farmatodo";
+  workbook.creator = "Sistema de Evaluación de Desempeño de Campañas — Herbaplant";
   workbook.created = new Date();
 
   const worksheet = workbook.addWorksheet("Ejecuciones");
@@ -64,7 +64,7 @@ export async function generarExcelCampana(campanaId: number): Promise<ExcelJS.Bu
   if (!campana) throw new Error("Campaña no encontrada");
 
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = "Sistema de Evaluación de Desempeño de Campañas — Farmatodo";
+  workbook.creator = "Sistema de Evaluación de Desempeño de Campañas — Herbaplant";
   workbook.created = new Date();
 
   const worksheet = workbook.addWorksheet("Ejecuciones");

@@ -21,7 +21,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Desempeño de Campañas — Farmatodo",
+  title: "Desempeño de Campañas — Herbaplant",
   description:
     "Evaluación ejecutiva del desempeño de campañas publicitarias en tienda.",
 };

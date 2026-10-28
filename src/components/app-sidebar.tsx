@@ -82,10 +82,10 @@ export function AppSidebar() {
       <SidebarHeader>
         <div className="flex items-center gap-2 px-2 py-1.5">
           <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground font-semibold">
-            F
+            H
           </div>
           <div className="flex flex-col leading-tight group-data-[collapsible=icon]:hidden">
-            <span className="text-sm font-semibold">Farmatodo</span>
+            <span className="text-sm font-semibold">Herbaplant</span>
             <span className="text-xs text-muted-foreground">
               Desempeño de campañas
             </span>

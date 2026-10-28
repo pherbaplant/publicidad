@@ -1,4 +1,4 @@
-// Prisma schema — Sistema de Evaluación de Desempeño de Campañas Publicitarias (Farmatodo)
+// Prisma schema — Sistema de Evaluación de Desempeño de Campañas Publicitarias (Herbaplant)
 // Ver /CLAUDE.md para el detalle de módulos, relaciones y fórmulas (ROAS / Índice de Desempeño).
 
 generator client {

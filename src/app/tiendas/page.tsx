@@ -13,7 +13,7 @@ export default async function TiendasPage() {
       <PageHeader
         icon={Store}
         title="Tiendas"
-        description="Catálogo de tiendas Farmatodo por ciudad y formato."
+        description="Catálogo de farmacias donde se ejecutan las campañas, por ciudad y formato."
         actions={<NuevaTiendaDialog ciudades={ciudades} />}
       />
       <TiendasTable tiendas={tiendas} ciudades={ciudades} />

@@ -54,7 +54,7 @@ export function NuevoResponsableDialog() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Correo</Label>
-            <Input id="email" name="email" type="email" placeholder="maria.perez@farmatodo.com" />
+            <Input id="email" name="email" type="email" placeholder="maria.perez@herbaplant.com.ve" />
             {state.errors?.email ? (
               <p className="text-sm text-destructive">{state.errors.email[0]}</p>
             ) : null}
